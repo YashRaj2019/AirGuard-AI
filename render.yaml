@@ -1,0 +1,27 @@
+services:
+  # Python FastAPI Backend & ML Forecasting Microservice
+  - type: web
+    name: airguard-ai-backend
+    runtime: python
+    rootDir: ml-service
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: airguard-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+
+databases:
+  # Managed PostgreSQL Database
+  - name: airguard-db
+    databaseName: airguard_db
+    user: postgres
+    plan: free

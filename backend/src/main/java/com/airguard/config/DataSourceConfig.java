@@ -78,7 +78,13 @@ public class DataSourceConfig {
                     if (path != null && path.startsWith("/")) {
                         path = path.substring(1);
                     }
+                    String query = uri.getQuery();
                     String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s", uri.getHost(), port, path);
+                    if (query != null && !query.isBlank()) {
+                        jdbcUrl += "?" + query;
+                    } else if (!jdbcUrl.contains("sslmode")) {
+                        jdbcUrl += "?sslmode=require";
+                    }
 
                     config.setDriverClassName("org.postgresql.Driver");
                     config.setJdbcUrl(jdbcUrl);
@@ -104,7 +110,7 @@ public class DataSourceConfig {
                 && !dbHost.equalsIgnoreCase("127.0.0.1");
 
         if (isExplicitRemoteHost) {
-            String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s", dbHost, dbPort, dbName);
+            String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s?sslmode=prefer", dbHost, dbPort, dbName);
             log.info("Configuring PostgreSQL DataSource with remote host: {}", jdbcUrl);
             config.setDriverClassName("org.postgresql.Driver");
             config.setJdbcUrl(jdbcUrl);
@@ -134,7 +140,7 @@ public class DataSourceConfig {
         log.warn("==========================================================================");
 
         config.setDriverClassName("org.h2.Driver");
-        config.setJdbcUrl("jdbc:h2:mem:airguard_db;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
+        config.setJdbcUrl("jdbc:h2:mem:airguard_db;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
         config.setUsername("sa");
         config.setPassword("");
         return new HikariDataSource(config);

@@ -53,7 +53,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<String>> handleGeneralException(Exception ex) {
         log.error("Unhandled internal server error: ", ex);
+        String detail = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        if (root != ex && root.getMessage() != null && !detail.contains(root.getMessage())) {
+            detail += " (Cause: " + root.getMessage() + ")";
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An unexpected server error occurred. Please try again later."));
+                .body(ApiResponse.error(detail));
     }
 }

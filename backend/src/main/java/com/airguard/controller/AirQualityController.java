@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/air-quality")
+@RequestMapping({"/api/air-quality", "/air-quality"})
 public class AirQualityController {
 
     private final AirQualityService airQualityService;

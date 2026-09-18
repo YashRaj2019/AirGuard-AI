@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping({"/api", ""})
 public class PredictionController {
 
     private final MLServiceClient mlServiceClient;

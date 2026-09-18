@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/system")
+@RequestMapping({"/api/system", "/system"})
 public class SystemController {
 
     private final DataSource dataSource;

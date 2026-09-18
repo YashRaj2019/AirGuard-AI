@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cities")
+@RequestMapping({"/api/cities", "/cities"})
 public class CityController {
 
     private final CityService cityService;

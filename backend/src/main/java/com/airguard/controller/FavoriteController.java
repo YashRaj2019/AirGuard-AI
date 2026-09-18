@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/favorites")
+@RequestMapping({"/api/favorites", "/favorites"})
 public class FavoriteController {
 
     private final FavoriteCityRepository favoriteRepo;

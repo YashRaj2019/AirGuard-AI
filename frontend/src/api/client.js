@@ -1,9 +1,13 @@
 import axios from 'axios';
 
 // Backend Base URL (dynamically uses deployed Render backend in production)
-const API_BASE_URL =
+const rawBase =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? 'https://airguard-ai-wety.onrender.com/api' : 'http://localhost:8000/api');
+
+// Normalize: remove trailing slash and ensure /api suffix
+const cleanBase = rawBase.replace(/\/+$/, '');
+const API_BASE_URL = cleanBase.endsWith('/api') ? cleanBase : `${cleanBase}/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,

@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/ai")
+@RequestMapping({"/api/ai", "/ai"})
 public class AIController {
 
     private final AIService aiService;

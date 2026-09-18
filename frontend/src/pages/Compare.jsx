@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { airGuardApi } from '../api/client';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import {
@@ -6,8 +7,9 @@ import {
 } from 'recharts';
 import { GitCompare, Brain, Sparkles, Trophy, ArrowRight, Activity, Thermometer, Wind } from 'lucide-react';
 
-export default function Compare({ cities = [] }) {
-  const [city1, setCity1] = useState('Delhi');
+export default function Compare({ cities = [], selectedCity, onSelectCity }) {
+  const navigate = useNavigate();
+  const [city1, setCity1] = useState(selectedCity || 'Delhi');
   const [city2, setCity2] = useState('Mumbai');
   const [city3, setCity3] = useState('London');
   const [compareData, setCompareData] = useState(null);
@@ -216,9 +218,22 @@ export default function Compare({ cities = [] }) {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500">
-                  Dominant Contributor: <strong className="text-slate-300">{city.primaryPollutant || 'PM2.5'}</strong>
+                <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
+                  <span>Dominant: <strong className="text-slate-300">{city.primaryPollutant || 'PM2.5'}</strong></span>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSelectCity) onSelectCity(city.cityName);
+                    navigate('/');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full mt-2 py-2 bg-slate-800/80 hover:bg-brand-500 hover:text-slate-950 text-slate-200 text-xs font-bold rounded-xl border border-slate-700/80 hover:border-brand-400 flex items-center justify-center space-x-1.5 transition-all shadow-sm group cursor-pointer"
+                >
+                  <span>Inspect {city.cityName} on Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </div>
             ))}
           </div>

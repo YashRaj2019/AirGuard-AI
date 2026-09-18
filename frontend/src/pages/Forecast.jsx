@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { airGuardApi } from '../api/client';
 import AqiGauge from '../components/AqiGauge';
 import ContributingFactorsBar from '../components/ContributingFactorsBar';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import PredictAqiModal from '../components/PredictAqiModal';
 import {
   AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, ReferenceLine
 } from 'recharts';
 import {
-  Sparkles, TrendingUp, Cpu, Brain, ShieldAlert, Sliders, RefreshCw, AlertCircle, Check
+  Sparkles, TrendingUp, Cpu, Brain, ShieldAlert, Sliders, RefreshCw, AlertCircle, Check, Activity
 } from 'lucide-react';
 import { useModel } from '../context/ModelContext';
 
 export default function Forecast({ selectedCity, onSelectCity, cities }) {
+  const navigate = useNavigate();
   const { activeModel, setActiveModel, availableModels } = useModel();
   const [horizon, setHorizon] = useState('24h');
   const [prediction, setPrediction] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [predicting, setPredicting] = useState(false);
+  const [isCustomPredictOpen, setIsCustomPredictOpen] = useState(false);
 
   useEffect(() => {
     executePrediction(selectedCity, activeModel);
@@ -113,10 +117,33 @@ export default function Forecast({ selectedCity, onSelectCity, cities }) {
           <button
             onClick={() => executePrediction(selectedCity, activeModel)}
             disabled={predicting}
-            className="mt-4 sm:mt-5 p-2.5 bg-slate-800 hover:bg-slate-700 text-brand-400 rounded-lg border border-slate-700 transition-colors"
+            className="mt-4 sm:mt-5 p-2.5 bg-slate-800 hover:bg-slate-700 text-brand-400 rounded-xl border border-slate-700 transition-colors"
             title="Re-run forecast"
           >
             <RefreshCw className={`w-4 h-4 ${predicting ? 'animate-spin' : ''}`} />
+          </button>
+
+          <button
+            id="btn-custom-simulation"
+            onClick={() => setIsCustomPredictOpen(true)}
+            className="mt-4 sm:mt-5 flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-brand-500 to-cyan-400 hover:from-brand-400 hover:to-cyan-300 text-slate-950 rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 transition-all cursor-pointer"
+            title="Open parameter sliders and test custom pollution scenarios"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Interactive Simulator</span>
+          </button>
+
+          <button
+            id="btn-forecast-to-dashboard"
+            onClick={() => {
+              navigate('/');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="mt-4 sm:mt-5 flex items-center space-x-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 transition-all cursor-pointer"
+            title="View Live Station Telemetry on Dashboard"
+          >
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Dashboard</span>
           </button>
         </div>
       </div>
@@ -303,6 +330,14 @@ export default function Forecast({ selectedCity, onSelectCity, cities }) {
           </div>
         </>
       )}
+
+      {/* Interactive Simulator Modal */}
+      <PredictAqiModal
+        isOpen={isCustomPredictOpen}
+        onClose={() => setIsCustomPredictOpen(false)}
+        selectedCity={selectedCity}
+        currentTelemetry={prediction}
+      />
 
     </div>
   );

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { airGuardApi } from '../api/client';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from 'recharts';
-import { Layers, ShieldCheck, AlertCircle, Info, Activity } from 'lucide-react';
+import { Layers, ShieldCheck, AlertCircle, Info, Activity, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function Pollutants({ selectedCity }) {
+  const navigate = useNavigate();
   const [pollutants, setPollutants] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,16 +40,33 @@ export default function Pollutants({ selectedCity }) {
       
       {/* Page Header */}
       <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800">
-        <div className="flex items-center space-x-2 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-1">
-          <Layers className="w-4 h-4" />
-          <span>Atmospheric Chemistry & Toxicology</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-1">
+              <Layers className="w-4 h-4" />
+              <span>Atmospheric Chemistry & Toxicology</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+              Criteria Pollutant Drill-Down: {selectedCity}
+            </h1>
+            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+              Comprehensive physiological, chemical, and concentration assessment of the primary ambient pollutants defined by the US EPA and World Health Organization.
+            </p>
+          </div>
+
+          <button
+            id="btn-inspect-pollutants-dashboard"
+            onClick={() => {
+              navigate('/');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-brand-500 via-emerald-400 to-cyan-400 hover:from-brand-400 hover:to-cyan-300 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 fill-slate-950" />
+            <span>Inspect Live {selectedCity} AQI</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          Criteria Pollutant Drill-Down: {selectedCity}
-        </h1>
-        <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-          Comprehensive physiological, chemical, and concentration assessment of the primary ambient pollutants defined by the US EPA and World Health Organization.
-        </p>
       </div>
 
       {loading ? (

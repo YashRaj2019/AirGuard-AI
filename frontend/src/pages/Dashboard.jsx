@@ -5,6 +5,7 @@ import AqiGauge from '../components/AqiGauge';
 import PollutantCard from '../components/PollutantCard';
 import TrendBadge from '../components/TrendBadge';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import PredictAqiModal from '../components/PredictAqiModal';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, CartesianGrid, ReferenceLine
@@ -26,6 +27,7 @@ export default function Dashboard({ selectedCity, onSelectCity, cities = [] }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [isPredictModalOpen, setIsPredictModalOpen] = useState(false);
 
   // Interactive Demographic Persona state for Health Advisory
   const [selectedPersona, setSelectedPersona] = useState('general');
@@ -252,7 +254,7 @@ Data Source: ${current.dataSource || 'Copernicus CAMS Live'}`;
       />
 
       {/* 1. Quick-Access Station Pills Ribbon */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-800">
+      <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-800 max-w-full">
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center space-x-1.5 mr-1">
           <Activity className="w-3.5 h-3.5 text-brand-400" />
           <span>Stations:</span>
@@ -262,13 +264,15 @@ Data Source: ${current.dataSource || 'Copernicus CAMS Live'}`;
           return (
             <button
               key={c.name}
+              id={`station-pill-${c.name.toLowerCase()}`}
               onClick={() => onSelectCity(c.name)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all flex items-center space-x-1.5 border ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all flex items-center space-x-1.5 border cursor-pointer ${
                 isSelected
-                  ? 'bg-brand-500 text-slate-950 border-brand-400 shadow-md shadow-brand-500/20 scale-[1.03]'
+                  ? 'bg-brand-500 text-slate-950 border-brand-400 shadow-md shadow-brand-500/20 scale-[1.03] font-bold'
                   : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/80 hover:border-slate-600'
               }`}
             >
+              <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-slate-950 animate-pulse' : 'bg-brand-400'}`} />
               <span>{c.name}</span>
               <span className={`text-[10px] font-mono px-1 rounded ${isSelected ? 'bg-slate-950/30 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
                 {c.country?.slice(0, 2).toUpperCase() || 'GL'}
@@ -310,9 +314,16 @@ Data Source: ${current.dataSource || 'Copernicus CAMS Live'}`;
         </div>
       )}
 
-      {/* Top Hero Station Banner */}
-      <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden">
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Top Hero Station Banner with Dynamic Ambient AQI Aura */}
+      <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800 relative overflow-hidden transition-all duration-500">
+        <div
+          className="absolute -right-20 -top-20 w-80 h-80 rounded-full blur-3xl pointer-events-none transition-all duration-1000 opacity-20"
+          style={{ backgroundColor: current?.categoryColor || '#10b981' }}
+        />
+        <div
+          className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full blur-3xl pointer-events-none transition-all duration-1000 opacity-15"
+          style={{ backgroundColor: current?.categoryColor || '#10b981' }}
+        />
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
@@ -352,7 +363,7 @@ Data Source: ${current.dataSource || 'Copernicus CAMS Live'}`;
             <button
               onClick={copySnapshot}
               title="Copy Telemetry Snapshot to Clipboard"
-              className="flex items-center space-x-1.5 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition-all"
+              className="flex items-center space-x-1.5 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition-all cursor-pointer"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
               <span>{copied ? 'Copied!' : 'Snapshot'}</span>
@@ -361,18 +372,21 @@ Data Source: ${current.dataSource || 'Copernicus CAMS Live'}`;
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center space-x-1.5 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all disabled:opacity-50"
+              className="flex items-center space-x-1.5 px-3 py-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-all disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-brand-400 ${refreshing ? 'animate-spin' : ''}`} />
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
             
+            {/* Dedicated Interactive Predict AQI Button */}
             <button
-              onClick={() => navigate('/forecast')}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-brand-600 via-emerald-500 to-cyan-500 hover:from-brand-500 hover:to-cyan-400 text-slate-950 text-xs font-bold rounded-xl shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02]"
+              id="btn-predict-aqi-hero"
+              onClick={() => setIsPredictModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-brand-500 via-emerald-400 to-cyan-400 hover:from-brand-400 hover:to-cyan-300 text-slate-950 text-xs font-extrabold rounded-xl shadow-lg shadow-brand-500/30 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer group"
+              title="Open Interactive Machine Learning Predictor"
             >
-              <TrendingUp className="w-4 h-4 stroke-[2.5]" />
-              <span>Predict Future AQI</span>
+              <Sparkles className="w-4 h-4 text-slate-950 fill-slate-950 group-hover:rotate-12 transition-transform" />
+              <span>⚡ Predict 24h AQI</span>
             </button>
           </div>
         </div>
@@ -878,6 +892,14 @@ Data Source: ${current.dataSource || 'Copernicus CAMS Live'}`;
           </div>
         </div>
       )}
+
+      {/* Interactive Machine Learning Predictor Modal */}
+      <PredictAqiModal
+        isOpen={isPredictModalOpen}
+        onClose={() => setIsPredictModalOpen(false)}
+        selectedCity={selectedCity}
+        currentTelemetry={current}
+      />
 
     </div>
   );

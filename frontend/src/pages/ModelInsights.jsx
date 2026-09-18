@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { airGuardApi } from '../api/client';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell
 } from 'recharts';
-import { Cpu, CheckCircle2, BarChart2, Award, Zap, Database, GitBranch, Check, Radio, PlayCircle } from 'lucide-react';
+import { Cpu, CheckCircle2, BarChart2, Award, Zap, Database, GitBranch, Check, Radio, PlayCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { useModel } from '../context/ModelContext';
 
 export default function ModelInsights() {
+  const navigate = useNavigate();
   const { activeModel, setActiveModel, activeModelDetails } = useModel();
   const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,16 +52,33 @@ export default function ModelInsights() {
       
       {/* Header */}
       <div className="glass-panel rounded-2xl p-6 sm:p-8 border border-slate-800">
-        <div className="flex items-center space-x-2 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-1">
-          <Cpu className="w-4 h-4" />
-          <span>Machine Learning Benchmark & Model Governance</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center space-x-2 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-1">
+              <Cpu className="w-4 h-4" />
+              <span>Machine Learning Benchmark & Model Governance</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+              Model Evaluation & Performance Insights
+            </h1>
+            <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+              Empirical regression benchmark across multiple algorithmic architectures. Select and activate your desired model to govern live predictions across the platform.
+            </p>
+          </div>
+
+          <button
+            id="btn-inspect-model-dashboard"
+            onClick={() => {
+              navigate('/');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-brand-500 via-emerald-400 to-cyan-400 hover:from-brand-400 hover:to-cyan-300 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg shadow-brand-500/25 transition-all hover:scale-[1.02] shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 fill-slate-950" />
+            <span>Inspect Live AQI on Dashboard</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          Model Evaluation & Performance Insights
-        </h1>
-        <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-          Empirical regression benchmark across multiple algorithmic architectures using strict temporal validation splits (no data leakage). Select and activate your desired model to govern live predictions across the platform.
-        </p>
       </div>
 
       {loading ? (

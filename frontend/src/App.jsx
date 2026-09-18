@@ -104,24 +104,25 @@ function AppContent() {
             />
             <Route
               path="/pollutants"
-              element={<Pollutants selectedCity={selectedCity} />}
+              element={<Pollutants selectedCity={selectedCity} onSelectCity={setSelectedCity} />}
             />
             <Route
               path="/compare"
-              element={<Compare cities={cities} />}
+              element={<Compare cities={cities} selectedCity={selectedCity} onSelectCity={setSelectedCity} />}
             />
             <Route
               path="/advisory"
               element={
                 <Advisory
                   selectedCity={selectedCity}
+                  onSelectCity={setSelectedCity}
                   cities={cities}
                 />
               }
             />
             <Route
               path="/models"
-              element={<ModelInsights />}
+              element={<ModelInsights selectedCity={selectedCity} onSelectCity={setSelectedCity} />}
             />
             <Route
               path="/history"

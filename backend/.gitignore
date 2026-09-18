@@ -1,0 +1,41 @@
+# Maven target directory
+target/
+*.jar
+*.war
+*.nar
+*.ear
+*.class
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbproject/load-impl.xml
+/nbproject/load-custom.xml
+
+# Visual Studio Code
+.vscode/
+
+# Environment files and secrets
+.env
+.env.local
+.env*.local
+!.env.example
+
+# Logs
+*.log

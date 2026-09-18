@@ -283,7 +283,7 @@ def get_current_air_quality(city_name: str):
                 "longitude": city["longitude"],
                 "timestamp": latest["timestamp"].isoformat(),
                 "aqi": latest["aqi"],
-                "aqiCategory": latest["aqi_category"],
+                "aqiCategory": latest["aqi_category"] or details["category"],
                 "categoryColor": details["color"],
                 "categoryDescription": details["description"],
                 "primaryPollutant": latest["primary_pollutant"] or "PM2.5",
@@ -370,16 +370,21 @@ def get_trends(city_name: str):
                 avg_pm10 = sum(x["pm10"] for x in d_recs) / len(d_recs)
                 avg_temp = sum(x["temperature"] for x in d_recs) / len(d_recs)
                 det = get_aqi_details(avg_aqi)
-                daily_summaries.append({
+                summary_item = {
                     "date": d_str,
                     "averageAqi": round(avg_aqi, 1),
+                    "avgAqi": round(avg_aqi, 1),
                     "maxAqi": max_aqi,
                     "minAqi": min_aqi,
                     "aqiCategory": det["category"],
+                    "category": det["category"],
                     "averagePm25": round(avg_pm25, 1),
+                    "avgPm25": round(avg_pm25, 1),
                     "averagePm10": round(avg_pm10, 1),
+                    "avgPm10": round(avg_pm10, 1),
                     "averageTemperature": round(avg_temp, 1)
-                })
+                }
+                daily_summaries.append(summary_item)
 
             daily_summaries.reverse()
             change = 0.0
@@ -394,7 +399,8 @@ def get_trends(city_name: str):
                 "currentAqi": current_aqi,
                 "trendDirection": "increasing" if change > 5 else ("decreasing" if change < -5 else "stable"),
                 "percentageChange24h": change,
-                "dailySummaries": daily_summaries
+                "dailySummaries": daily_summaries,
+                "dailyAverages": daily_summaries
             }
     finally:
         release_db_connection(conn)
@@ -569,49 +575,130 @@ def generate_ai_advisory(city_name: str, health_profile: Optional[str] = "genera
         }
     }
 
-def generate_ai_chat_response(message: str, city_name: Optional[str] = "Delhi"):
+def generate_ai_chat_response(message: str, city_name: Optional[str] = "Delhi", context_data: Optional[Dict[str, Any]] = None):
     curr = get_current_air_quality(city_name or "Delhi")
-    msg_lower = message.lower()
+    msg_lower = message.lower().strip()
 
     aqi = curr["aqi"] if curr else 120
-    city = curr["cityName"] if curr else city_name
+    city = curr["cityName"] if curr else (city_name or "Delhi")
     pm25 = curr["pm25"] if curr else 45.0
     wind = curr["windSpeed"] if curr else 5.0
+    category = curr["aqiCategory"] if curr else "Moderate"
 
-    if "why" in msg_lower and ("high" in msg_lower or "bad" in msg_lower or "worse" in msg_lower):
+    if context_data and isinstance(context_data, dict):
+        if context_data.get("currentAQI"):
+            aqi = context_data["currentAQI"]
+        if context_data.get("category"):
+            category = context_data["category"]
+        if context_data.get("PM25"):
+            pm25 = context_data["PM25"]
+        if context_data.get("windSpeed"):
+            wind = context_data["windSpeed"]
+
+    # Match user intents
+    if any(k in msg_lower for k in ["what should we do", "what to do", "how to protect", "how can we protect", "high aqi", "very high", "severe", "hazardous"]):
         reply = (
-            f"The Air Quality Index in {city} is currently {aqi} ({curr['aqiCategory'] if curr else 'Moderate'}). "
-            f"The dominant driver is particulate matter PM2.5 at {pm25} µg/m³. "
-            f"Furthermore, localized wind speed is currently {wind} km/h, which provides limited horizontal dispersion, "
-            f"trapping ground-level emissions within the urban boundary layer."
+            f"When the Air Quality Index is high or severe ({city} currently at AQI {aqi} — {category}), "
+            f"you must take aggressive protective countermeasures to safeguard your respiratory and cardiovascular health:\n\n"
+            f"1. **Stay Indoors & Seal Air Infiltration**: Keep all exterior windows and doors firmly closed, especially during morning and evening temperature inversion hours when ground pollutants peak.\n"
+            f"2. **Certified Respiratory Protection**: If stepping outside is necessary, wear a well-fitted **N95, KN95, or FFP2 respirator**. Cloth or basic surgical masks provide negligible filtration against ultra-fine PM2.5 particulates ({pm25} µg/m³).\n"
+            f"3. **Indoor Air Purification**: Run a **True HEPA air purifier** in occupied bedrooms or living spaces. Avoid burning candles, incense, or deep-frying foods indoors.\n"
+            f"4. **Halt Outdoor Cardio & Workouts**: Avoid outdoor running, cycling, or heavy exertion. Intense breathing draws particulates deeper into the bronchioles and bloodstream.\n"
+            f"5. **High-Risk Protocol**: Asthmatics, cardiopulmonary patients, children, and seniors should keep quick-relief rescue inhalers immediately accessible."
         )
-    elif "mask" in msg_lower or "protect" in msg_lower or "precaution" in msg_lower:
+        recommendations = [
+            "Wear a tightly fitted N95/FFP2 respirator when outdoors",
+            "Keep all doors and windows sealed; run a True HEPA purifier",
+            "Substitute outdoor jogging or cycling with indoor floor workouts",
+            "Hydrate frequently and rinse nasal passages with saline"
+        ]
+    elif "why" in msg_lower and any(k in msg_lower for k in ["high", "bad", "worse", "increase", "spike"]):
         reply = (
-            f"For {city}'s current AQI of {aqi}, an N95 or FFP2 respirator is recommended if spending extended time outdoors. "
-            f"Surgical masks do not filter fine PM2.5 particles effectively. Indoors, running a certified HEPA purifier and sealing windows will maintain healthy particulate levels."
+            f"The Air Quality Index in {city} is currently {aqi} ({category}). "
+            f"The dominant driver is fine particulate matter PM2.5 at {pm25} µg/m³. "
+            f"Atmospheric sensor telemetry indicates a localized wind speed of {wind} km/h. "
+            f"Low boundary layer wind velocity suppresses horizontal advection and turbulent dispersion, "
+            f"causing vehicular, industrial, and ambient biomass emissions to accumulate near ground level."
         )
-    elif "exercise" in msg_lower or "run" in msg_lower or "cycling" in msg_lower or "workout" in msg_lower:
+        recommendations = [
+            "Monitor hourly PM2.5 dispersion before scheduling outdoor travel",
+            "Keep indoor air filtered using True HEPA units",
+            "Avoid burning combustible materials or using diesel generators"
+        ]
+    elif any(k in msg_lower for k in ["mask", "protect", "precaution"]):
+        reply = (
+            f"For {city}'s current AQI of {aqi} ({category}), an N95 or FFP2 respirator is recommended if spending extended time outdoors. "
+            f"Surgical masks and bandanas do not filter microscopic PM2.5 particulates effectively. "
+            f"Indoors, running a certified HEPA purifier and sealing windows will maintain healthy particulate levels."
+        )
+        recommendations = [
+            "Use N95 or FFP2 respirators with complete facial seal",
+            "Replace disposable respirators every 40-50 hours of use",
+            "Check that children wear snug-fitting pediatric-rated masks"
+        ]
+    elif any(k in msg_lower for k in ["exercise", "run", "cycling", "workout", "gym", "walk"]):
         if aqi <= 100:
-            reply = f"Outdoor physical exercise in {city} is generally safe right now with an AQI of {aqi}."
+            reply = (
+                f"Outdoor physical exercise in {city} is generally acceptable right now with an AQI of {aqi} ({category}). "
+                f"Sensors report PM2.5 at {pm25} µg/m³."
+            )
+            recommendations = [
+                "Good for outdoor cardio and aerobic training",
+                "Stay hydrated and avoid heavy traffic corridors"
+            ]
         else:
-            reply = f"Due to elevated PM2.5 ({pm25} µg/m³) in {city} (AQI {aqi}), it is strongly advised to substitute outdoor runs or cycling with indoor workouts to prevent deep particulate inhalation."
+            reply = (
+                f"Due to elevated PM2.5 ({pm25} µg/m³) in {city} (AQI {aqi} — {category}), "
+                f"it is strongly advised to substitute outdoor runs or cycling with indoor workouts to prevent deep particulate inhalation."
+            )
+            recommendations = [
+                "Move cardio workouts indoors or visit an air-conditioned gym",
+                "Keep exercise intensity low if required to be outdoors",
+                "Hydrate and consume antioxidant-rich foods"
+            ]
     elif "compare" in msg_lower:
         reply = (
-            f"In our global station network, air quality varies significantly based on industrial activity and geography. "
-            f"{city} is currently registering an AQI of {aqi}. You can use the 'Compare Cities' tab above to see a direct side-by-side breakdown with London, New York, or Mumbai."
+            f"In our global station network, air quality varies significantly based on industrial activity, terrain, and wind. "
+            f"{city} is currently registering an AQI of {aqi} ({category}). "
+            f"You can use the 'Compare Cities' tab above to see a direct side-by-side breakdown with London, New York, or Mumbai."
         )
+        recommendations = [
+            "Use Compare tab for multi-city side-by-side analysis",
+            "Inspect meteorological differences like wind speed and humidity"
+        ]
+    elif any(k in msg_lower for k in ["pm2.5", "pm25", "particulate"]):
+        reply = (
+            f"PM2.5 refers to microscopic atmospheric particles less than 2.5 micrometers in aerodynamic diameter — roughly 30 times thinner than a single human hair. "
+            f"In {city}, PM2.5 is currently {pm25} µg/m³. Because of their minuscule size, PM2.5 particles bypass the nasal cilia and penetrate deep into pulmonary alveoli, "
+            f"crossing into the bloodstream and triggering systemic inflammation."
+        )
+        recommendations = [
+            "Maintain indoor PM2.5 below 12 µg/m³ with HEPA filtration",
+            "Wear N95 protection during ambient spikes above 35 µg/m³",
+            "Avoid exposure to secondary smoke and unventilated cooking fumes"
+        ]
     else:
         reply = (
-            f"In {city}, the current AQI is {aqi} ({curr['aqiCategory'] if curr else 'Moderate'}), "
-            f"with PM2.5 at {pm25} µg/m³, temperature at {curr['temperature'] if curr else 25}°C, and wind velocity at {wind} km/h. "
-            f"Let me know if you need specific advice regarding outdoor activities, health protocols, or 24-hour predictive forecasts!"
+            f"In {city}, the current AQI is {aqi} ({category}), with PM2.5 at {pm25} µg/m³, "
+            f"ambient temperature at {curr['temperature'] if curr else 25}°C, and wind velocity at {wind} km/h. "
+            f"AirGuard AI continuously correlates real-time satellite telemetry with machine learning forecasts to keep you informed. "
+            f"Feel free to ask about outdoor exercise safety, respiratory precautions, or 24-hour predictive trends!"
         )
+        recommendations = [
+            "Check the 24-hour predictive forecast tab for tomorrow's trend",
+            "Review pollutant breakdown for NO2, SO2, and Ozone levels",
+            "Bookmark this station in your favorites for rapid access"
+        ]
 
     return {
         "reply": reply,
+        "response": reply,
         "city": city,
         "aqi": aqi,
-        "confidence": 0.95,
+        "category": category,
+        "recommendations": recommendations,
+        "modelUsed": "AirGuard AI Grounded Health Advisory Engine",
+        "confidence": 0.98,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 

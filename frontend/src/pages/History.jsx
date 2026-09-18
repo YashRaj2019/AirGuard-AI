@@ -88,26 +88,27 @@ export default function History({ selectedCity, onSelectCity }) {
                 {favorites.map((city) => (
                   <div
                     key={city.id}
-                    className="p-4 bg-slate-900/80 rounded-xl border border-slate-800 hover:border-slate-700 flex items-center justify-between transition-all"
+                    onClick={() => {
+                      onSelectCity(city.name);
+                      navigate('/');
+                    }}
+                    className="p-4 bg-slate-900/80 hover:bg-slate-850 cursor-pointer rounded-xl border border-slate-800 hover:border-brand-500/40 flex items-center justify-between transition-all group"
                   >
                     <div>
-                      <h4 className="text-base font-bold text-white">{city.name}</h4>
+                      <h4 className="text-base font-bold text-white group-hover:text-brand-300 transition-colors">{city.name}</h4>
                       <p className="text-xs text-slate-400">{city.state ? `${city.state}, ` : ''}{city.country}</p>
                     </div>
 
                     <div className="flex items-center space-x-2">
+                      <span className="text-xs font-semibold text-brand-400 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span>View</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
                       <button
-                        onClick={() => {
-                          onSelectCity(city.name);
-                          navigate('/');
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFavorite(city.name);
                         }}
-                        className="p-2 bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 rounded-lg border border-brand-500/30 transition-colors"
-                        title="View Dashboard"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleRemoveFavorite(city.name)}
                         className="p-2 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-lg border border-slate-700 transition-colors"
                         title="Remove Favorite"
                       >

@@ -6,6 +6,7 @@ import {
   Palette, Check
 } from 'lucide-react';
 import CitySearchModal from './CitySearchModal';
+import CitySelectorDropdown from './CitySelectorDropdown';
 import { airGuardApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -23,13 +24,13 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
   const themeMenuRef = useRef(null);
 
   const navItems = [
-    { to: '/', label: 'Dashboard', icon: Activity },
-    { to: '/forecast', label: 'ML Forecast', icon: TrendingUp },
-    { to: '/pollutants', label: 'Pollutants', icon: Layers },
-    { to: '/compare', label: 'Compare', icon: GitCompare },
-    { to: '/advisory', label: 'Ask AirGuard', icon: Bot, highlight: true },
-    { to: '/models', label: 'Models', icon: Cpu },
-    { to: '/history', label: 'History', icon: History },
+    { to: '/', label: 'Dashboard', shortLabel: 'Dashboard', icon: Activity },
+    { to: '/forecast', label: 'ML Forecast', shortLabel: 'Forecast', icon: TrendingUp },
+    { to: '/pollutants', label: 'Pollutants', shortLabel: 'Pollutants', icon: Layers },
+    { to: '/compare', label: 'Compare', shortLabel: 'Compare', icon: GitCompare },
+    { to: '/advisory', label: 'Ask AirGuard', shortLabel: 'Advisor', icon: Bot, highlight: true },
+    { to: '/models', label: 'Models', shortLabel: 'Models', icon: Cpu },
+    { to: '/history', label: 'History', shortLabel: 'History', icon: History },
   ];
 
   // Close menus on outside click
@@ -78,6 +79,7 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
               onCityAdded(res.data);
             }
             onSelectCity(res.data.name);
+            navigate('/');
           }
         } catch (err) {
           console.error('Location sync error:', err);
@@ -97,6 +99,13 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
     );
   };
 
+  const handleCityChange = (cityName) => {
+    if (onSelectCity) {
+      onSelectCity(cityName);
+    }
+    navigate('/');
+  };
+
   const getInitials = (name) => {
     if (!name) return 'U';
     const parts = name.trim().split(' ');
@@ -107,29 +116,29 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
   return (
     <>
       <header className="sticky top-0 z-40 glass-panel border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-xl">
-        <div className="max-w-[1720px] w-full mx-auto px-3 sm:px-5 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-2">
+        <div className="max-w-[1720px] w-full mx-auto px-2 sm:px-3 lg:px-4">
+          <div className="flex items-center justify-between h-16 gap-1 sm:gap-2">
             
             {/* Left: Brand Logo */}
             <div 
               onClick={() => navigate('/')} 
-              className="flex items-center space-x-2.5 cursor-pointer group shrink-0"
+              className="flex items-center space-x-2 cursor-pointer group shrink-0"
               id="nav-brand-logo"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-emerald-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform duration-200">
-                <Wind className="w-5 h-5 text-slate-950 stroke-[2.5]" />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 via-emerald-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform duration-200 shrink-0">
+                <Wind className="w-4 h-4 text-slate-950 stroke-[2.5]" />
               </div>
               <div className="hidden sm:block">
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-lg font-bold tracking-tight text-white font-sans">AirGuard</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">AI</span>
+                  <span className="text-base font-bold tracking-tight text-white font-sans">AirGuard</span>
+                  <span className="text-[10px] font-bold px-1 py-0.2 rounded bg-brand-500/20 text-brand-400 border border-brand-500/30">AI</span>
                 </div>
-                <p className="text-[9px] text-slate-400 tracking-wider uppercase font-medium">Environmental Intelligence</p>
+                <p className="text-[9px] text-slate-400 tracking-wider uppercase font-medium hidden 2xl:block">Environmental Intelligence</p>
               </div>
             </div>
 
             {/* Center: Navigation Links */}
-            <nav className="hidden md:flex items-center space-x-0.5 lg:space-x-1">
+            <nav className="hidden md:flex items-center space-x-0.5 xl:space-x-1 shrink-0">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -137,7 +146,7 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
-                      `flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-150 whitespace-nowrap ${
+                      `flex items-center space-x-1 px-1.5 xl:px-2 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 whitespace-nowrap ${
                         isActive
                           ? 'bg-brand-500/15 text-brand-400 border border-brand-500/30 shadow-sm shadow-brand-500/10'
                           : item.highlight
@@ -146,10 +155,11 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
                       }`
                     }
                   >
-                    <Icon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
-                    <span>{item.label}</span>
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden xl:inline 2xl:hidden">{item.shortLabel || item.label}</span>
+                    <span className="hidden 2xl:inline">{item.label}</span>
                     {item.highlight && (
-                      <Sparkles className="w-3 h-3 text-amber-400 animate-pulse" />
+                      <Sparkles className="w-3 h-3 text-amber-400 animate-pulse hidden xl:inline" />
                     )}
                   </NavLink>
                 );
@@ -157,7 +167,7 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
             </nav>
 
             {/* Right: Controls & User Profile */}
-            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+            <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
               
               {/* Use My Location GPS Button */}
               <button
@@ -165,14 +175,14 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
                 onClick={handleUseMyLocation}
                 disabled={locating}
                 title="Detect your GPS location and track local AQI"
-                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 text-xs font-semibold transition-all duration-150 shadow-sm disabled:opacity-50 group whitespace-nowrap"
+                className="flex items-center space-x-1 p-1.5 sm:px-2 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 text-xs font-semibold transition-all duration-150 shadow-sm disabled:opacity-50 group whitespace-nowrap shrink-0"
               >
                 {locating ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
                 ) : (
                   <Navigation className="w-3.5 h-3.5 group-hover:scale-110 transition-transform text-emerald-400 fill-emerald-400/20" />
                 )}
-                <span className="hidden sm:inline">{locating ? 'Locating...' : 'My Location'}</span>
+                <span className="hidden 2xl:inline">{locating ? 'Locating...' : 'My Location'}</span>
               </button>
 
               {/* Search Global Cities Button */}
@@ -180,27 +190,27 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
                 id="btn-search-city"
                 onClick={() => setIsSearchOpen(true)}
                 title="Search any city worldwide (Ctrl+K)"
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-600 text-xs font-medium transition-colors whitespace-nowrap"
+                className="flex items-center space-x-1 p-1.5 sm:px-2 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-slate-600 text-xs font-medium transition-colors whitespace-nowrap shrink-0"
               >
                 <Search className="w-3.5 h-3.5 text-slate-400" />
-                <span className="hidden sm:inline">Search</span>
-                <span className="hidden lg:inline text-[10px] text-slate-500 border border-slate-700/80 px-1 rounded font-mono">⌘K</span>
+                <span className="hidden 2xl:inline">Search</span>
+                <span className="hidden 2xl:inline text-[10px] text-slate-500 border border-slate-700/80 px-1 rounded font-mono">⌘K</span>
               </button>
 
               {/* Theme & Background Switcher */}
-              <div className="relative" ref={themeMenuRef}>
+              <div className="relative shrink-0" ref={themeMenuRef}>
                 <button
                   id="btn-theme-switcher"
                   onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
                   title={`Appearance: ${activeTheme.name}. Click to change background theme.`}
-                  className="flex items-center space-x-1.5 p-1.5 sm:px-2.5 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-brand-500/40 text-xs font-medium transition-colors whitespace-nowrap group"
+                  className="flex items-center space-x-1 p-1.5 sm:px-2 py-1.5 rounded-lg bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 hover:border-brand-500/40 text-xs font-medium transition-colors whitespace-nowrap group shrink-0"
                 >
                   <Palette className="w-3.5 h-3.5 text-brand-400 group-hover:rotate-12 transition-transform duration-200" />
-                  <span className="hidden xl:inline text-xs font-medium text-slate-300">{activeTheme.name.split(' ')[0]}</span>
                   <div
-                    className="w-2.5 h-2.5 rounded-full border border-white/20 hidden sm:block shadow-sm"
+                    className="w-2 h-2 rounded-full border border-white/20 shadow-sm"
                     style={{ backgroundColor: activeTheme.accentColor }}
                   />
+                  <span className="hidden 2xl:inline text-xs font-medium text-slate-300">{activeTheme.name.split(' ')[0]}</span>
                 </button>
 
                 {/* Theme Selector Popover */}
@@ -261,38 +271,44 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
                 )}
               </div>
 
-              {/* City Dropdown Selector */}
-              <div className="relative">
-                <select
-                  id="city-selector"
-                  value={selectedCity}
-                  onChange={(e) => onSelectCity && onSelectCity(e.target.value)}
-                  className="bg-slate-900/90 text-xs sm:text-sm font-medium text-slate-200 border border-slate-700/80 rounded-lg px-2.5 sm:px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 cursor-pointer shadow-inner max-w-[125px] sm:max-w-[160px] truncate"
-                >
-                  {cities.map((c) => (
-                    <option key={c.name} value={c.name}>
-                      📍 {c.name} ({c.country})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Dedicated "Check AQI" Action Button */}
+              <button
+                id="btn-nav-check-aqi"
+                type="button"
+                onClick={() => {
+                  navigate('/');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="flex items-center space-x-1 px-2 sm:px-2.5 py-1.5 bg-gradient-to-r from-brand-500 via-emerald-400 to-cyan-400 hover:from-brand-400 hover:to-cyan-300 text-slate-950 rounded-xl text-xs font-extrabold shadow-md shadow-brand-500/25 transition-all hover:scale-[1.03] active:scale-95 cursor-pointer whitespace-nowrap shrink-0 group"
+                title="Instant Air Quality Inspection & 24h Prediction on Dashboard"
+              >
+                <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950 shrink-0 group-hover:rotate-12 transition-transform" />
+                <span className="font-extrabold tracking-tight">Check AQI</span>
+              </button>
 
-              {/* User Profile Dropdown Pill - Never Overflows! */}
+              {/* Custom Interactive City Dropdown (Never overflows & always redirects to Dashboard) */}
+              <CitySelectorDropdown
+                selectedCity={selectedCity}
+                onSelectCity={handleCityChange}
+                cities={cities}
+              />
+
+              {/* User Profile Dropdown Pill - Always in frame & never cut off */}
               {user && (
-                <div className="relative" ref={userMenuRef}>
+                <div className="relative shrink-0" ref={userMenuRef}>
                   <button
                     id="btn-user-profile"
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-1.5 p-1 sm:px-2 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-brand-500/40 transition-all duration-150 group"
+                    className="flex items-center space-x-1 p-1 sm:px-1.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 hover:border-brand-500/40 transition-all duration-150 group shrink-0"
                     title={`${user.name} (${user.email})`}
                   >
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-brand-600 via-emerald-500 to-cyan-400 text-slate-950 font-extrabold flex items-center justify-center text-[11px] shadow-sm shadow-brand-500/20">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-brand-600 via-emerald-500 to-cyan-400 text-slate-950 font-extrabold flex items-center justify-center text-[11px] shadow-sm shadow-brand-500/20 shrink-0">
                       {getInitials(user.name)}
                     </div>
-                    <span className="hidden xl:inline text-xs font-semibold text-slate-200 max-w-[70px] truncate">
+                    <span className="hidden 2xl:inline text-xs font-semibold text-slate-200 max-w-[65px] truncate">
                       {user.name.split(' ')[0]}
                     </span>
-                    <ChevronDown className={`w-3 h-3 text-slate-400 group-hover:text-slate-200 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180 text-brand-400' : ''}`} />
+                    <ChevronDown className={`w-3 h-3 text-slate-400 group-hover:text-slate-200 transition-transform duration-200 shrink-0 ${isUserMenuOpen ? 'rotate-180 text-brand-400' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
@@ -330,7 +346,7 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
                           className="w-full flex items-center space-x-2 px-2.5 py-2 rounded-xl text-xs font-medium text-rose-400 hover:bg-rose-500/15 border border-transparent hover:border-rose-500/30 transition-all"
                         >
                           <LogOut className="w-3.5 h-3.5" />
-                          <span>Sign Out</span>
+                          <span>Sign Out / Switch Account</span>
                         </button>
                       </div>
 
@@ -359,7 +375,7 @@ export default function Navbar({ selectedCity, onSelectCity, cities = [], onCity
         onClose={() => setIsSearchOpen(false)}
         onCitySelected={(city) => {
           if (onCityAdded) onCityAdded(city);
-          onSelectCity(city.name);
+          handleCityChange(city.name);
         }}
       />
     </>

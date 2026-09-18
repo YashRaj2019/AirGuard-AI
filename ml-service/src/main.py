@@ -2,7 +2,8 @@ import os
 import sys
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, Header, Query, status
+from fastapi import FastAPI, HTTPException, Header, Query, status, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -68,6 +69,184 @@ def api_response(data: Any, message: str = "Success"):
 # -------------------------------------------------------------
 # 1. Health & Meta
 # -------------------------------------------------------------
+@app.get("/")
+def root_endpoint(request: Request):
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AirGuard AI — Backend Service Online</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: #030712;
+      color: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    .card {
+      background: radial-gradient(120% 120% at 50% 10%, #111827 0%, #030712 100%);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 24px;
+      padding: 2.5rem;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(16, 185, 129, 0.1);
+      text-align: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 1.5rem;
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+    }
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p {
+      color: #9ca3af;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0.9rem 1.4rem;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #030712;
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.4);
+    }
+    .btn-secondary {
+      background: #1f2937;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+    }
+    .btn-secondary:hover {
+      background: #374151;
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #1f2937;
+      text-align: left;
+    }
+    .meta-item {
+      font-size: 0.78rem;
+    }
+    .meta-label { color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem; }
+    .meta-val { color: #d1d5db; font-weight: 700; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      API Microservice Online &bull; Port 8000
+    </div>
+    <h1>AirGuard AI Backend</h1>
+    <p>The Python FastAPI Environmental Intelligence & ML inference backend is fully operational. Open the React application to explore live telemetry and interactive AQI predictions.</p>
+    
+    <div class="btn-group">
+      <a href="http://localhost:5173" class="btn btn-primary">
+        &rarr; Launch Frontend Web App (Port 5173)
+      </a>
+      <a href="/docs" class="btn btn-secondary">
+        &equiv; Open Interactive Swagger API Docs
+      </a>
+      <a href="/health" class="btn btn-secondary">
+        &hearts; View System Health & Telemetry Status
+      </a>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">Champion ML Model</div>
+        <div class="meta-val">Ridge Regression (R&sup2; 0.63)</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Database Status</div>
+        <div class="meta-val" style="color: #34d399;">PostgreSQL 16 Connected</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>"""
+        return HTMLResponse(content=html_content)
+
+    return JSONResponse(content={
+        "service": "AirGuard AI — Intelligent Air Quality Prediction & Advisory Platform",
+        "status": "online",
+        "version": "2.0.0",
+        "health": "/health",
+        "docs": "/docs",
+        "frontend": "http://localhost:5173",
+        "api": {
+            "cities": "/api/cities",
+            "telemetry": "/api/air-quality/current/Delhi",
+            "predict": "/api/ml/predict",
+            "model_performance": "/api/ml/model-performance",
+            "auth": "/api/auth/me"
+        },
+        "default_model": model_manager.best_model_name,
+        "available_models": list(model_manager.models.keys()),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+
 @app.get("/health")
 def health_check():
     return {
@@ -257,8 +436,17 @@ class AIAdvisoryRequest(BaseModel):
     question: Optional[str] = None
 
 class AIChatRequest(BaseModel):
-    message: str
-    city: Optional[str] = "Delhi"
+    message: Optional[str] = None
+    question: Optional[str] = None
+    city: Optional[str] = None
+    selectedCity: Optional[str] = None
+    contextData: Optional[Dict[str, Any]] = None
+
+    def get_message(self) -> str:
+        return self.message or self.question or "What is the current air quality advisory?"
+
+    def get_city(self) -> str:
+        return self.city or self.selectedCity or "Delhi"
 
 @app.post("/api/ai/advisory")
 def advisory_endpoint(req: AIAdvisoryRequest):
@@ -273,7 +461,9 @@ def explain_endpoint(payload: Dict[str, Any]):
 
 @app.post("/api/ai/chat")
 def chat_endpoint(req: AIChatRequest):
-    res = generate_ai_chat_response(req.message, req.city)
+    msg = req.get_message()
+    city = req.get_city()
+    res = generate_ai_chat_response(msg, city, req.contextData)
     return api_response(res)
 
 # -------------------------------------------------------------

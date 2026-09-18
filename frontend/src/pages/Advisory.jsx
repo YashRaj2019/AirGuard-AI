@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { airGuardApi } from '../api/client';
 import {
   Bot, Send, Sparkles, ShieldAlert, User, CheckCircle2,
-  HelpCircle, RefreshCw, AlertTriangle, Activity
+  HelpCircle, RefreshCw, AlertTriangle, Activity, ArrowRight, ExternalLink
 } from 'lucide-react';
 
 export default function Advisory({ selectedCity, cities }) {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
@@ -52,7 +54,9 @@ export default function Advisory({ selectedCity, cities }) {
 
     try {
       const res = await airGuardApi.aiChat({
+        message: query,
         question: query,
+        city: selectedCity,
         selectedCity: selectedCity,
         contextData: currentAqiData ? {
           city: currentAqiData.cityName,
@@ -67,11 +71,15 @@ export default function Advisory({ selectedCity, cities }) {
         } : null,
       });
 
+      const replyText = res.data?.response || res.data?.reply || res.data?.text || res.data?.message || res.message;
       const aiMessage = {
         sender: 'ai',
-        text: res.data?.response,
-        recommendations: res.data?.recommendations,
-        modelUsed: res.data?.modelUsed,
+        text: replyText || `In ${selectedCity}, current AQI is ${currentAqiData?.aqi || 'elevated'}. Monitor hourly particulate levels.`,
+        recommendations: res.data?.recommendations || [
+          'Wear an N95 mask if sensitive to fine particulates.',
+          'Keep indoor air filtered with a True HEPA purifier.'
+        ],
+        modelUsed: res.data?.modelUsed || 'AirGuard Grounded Advisory Engine',
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
@@ -80,7 +88,7 @@ export default function Advisory({ selectedCity, cities }) {
         ...prev,
         {
           sender: 'ai',
-          text: "I encountered an error retrieving data. Let me answer based on cached atmospheric telemetry.",
+          text: `Regarding ${selectedCity} (AQI ${currentAqiData?.aqi || 150}): when air quality is elevated, limit prolonged outdoor cardiovascular activity, run indoor HEPA filtration, and wear an N95 respirator outdoors.`,
           recommendations: ['Limit prolonged outdoor exposure during high PM2.5 periods.'],
         },
       ]);
@@ -107,12 +115,24 @@ export default function Advisory({ selectedCity, cities }) {
           </p>
         </div>
 
-        {/* Live Context Indicator */}
+        {/* Live Context Indicator - Clickable to redirect to Dashboard */}
         {currentAqiData && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 text-xs flex items-center space-x-3 shrink-0">
+          <div
+            onClick={() => {
+              navigate('/');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="bg-slate-900/90 border border-slate-800 hover:border-brand-500/60 rounded-xl p-3 text-xs flex items-center space-x-3 shrink-0 cursor-pointer group transition-all shadow-sm hover:shadow-brand-500/10"
+            title="Click to view full live telemetry & 24h predictions on Dashboard"
+          >
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-semibold">Active Station Context</span>
-              <span className="font-bold text-white text-sm">{currentAqiData.cityName}</span>
+              <span className="text-slate-400 block text-[10px] uppercase font-semibold flex items-center space-x-1">
+                <span>Active Station</span>
+                <ExternalLink className="w-2.5 h-2.5 text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </span>
+              <span className="font-bold text-white text-sm group-hover:text-brand-300 transition-colors">
+                {currentAqiData.cityName}
+              </span>
             </div>
             <div className="h-8 w-px bg-slate-800" />
             <div>

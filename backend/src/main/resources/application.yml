@@ -1,0 +1,47 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: airguard-ai-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:airguard_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:123456789}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 10000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+airguard:
+  ml-service:
+    url: ${ML_SERVICE_URL:http://localhost:8000}
+    timeout-ms: 8000
+
+  external-api:
+    air-quality-url: https://air-quality-api.open-meteo.com/v1/air-quality
+    weather-url: https://api.open-meteo.com/v1/forecast
+
+  ai:
+    provider: ${AI_PROVIDER:gemini}
+    api-key: ${AI_API_KEY:${GEMINI_API_KEY:}}
+    model: ${AI_MODEL:gemini-1.5-flash}
+
+logging:
+  level:
+    com.airguard: INFO
+    org.springframework.web: INFO

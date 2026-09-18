@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------------
+  # PostgreSQL Database
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: airguard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456789}
+      POSTGRES_DB: airguard_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docs/schema.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d airguard_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # Python FastAPI Machine Learning Microservice
+  # --------------------------------------------------------------------------
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: airguard-ml-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-123456789}
+      - DB_NAME=airguard_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # --------------------------------------------------------------------------
+  # Spring Boot REST API Backend
+  # --------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: airguard-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-123456789}
+      - DB_NAME=airguard_db
+      - ML_SERVICE_URL=http://ml-service:8000
+      - AI_API_KEY=${AI_API_KEY:-}
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
+      - AI_MODEL=${AI_MODEL:-gemini-1.5-flash}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml-service:
+        condition: service_started
+
+  # --------------------------------------------------------------------------
+  # React + Vite Frontend
+  # --------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: airguard-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

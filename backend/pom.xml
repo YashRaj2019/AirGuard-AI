@@ -56,6 +56,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- H2 Database for resilient zero-config fallback in cloud environments -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

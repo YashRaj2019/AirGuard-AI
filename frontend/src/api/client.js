@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Unified Python FastAPI Backend Base URL (configurable via .env for production deployment)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+// Backend Base URL (dynamically uses deployed Render backend in production)
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? 'https://airguard-ai-wety.onrender.com/api' : 'http://localhost:8000/api');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

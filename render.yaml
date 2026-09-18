@@ -19,6 +19,21 @@ services:
       - key: ENVIRONMENT
         value: production
 
+  # React 18 + Vite Frontend Static Site
+  - type: web
+    name: airguard-ai-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://airguard-ai-wety.onrender.com/api
+
 databases:
   # Managed PostgreSQL Database
   - name: airguard-db

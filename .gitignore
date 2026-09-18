@@ -15,6 +15,7 @@ desktop.ini
 **/.env.*
 !.env.example
 !**/.env.example
+!frontend/.env.production
 
 # Python / Machine Learning
 __pycache__/
